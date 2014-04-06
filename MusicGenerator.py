@@ -15,12 +15,15 @@ from Tkinter import *
 from bisect import bisect_left
 from pygame import mixer, time
 from threading import Thread
+import threading
 
 '''
 To-Do List:
 -Tidy up MenuInterface
--Create separate thread for playing music
--Lock the song.notes[] to prevent data race
+-Create separate thread for playing music/Join() is currently buggy
+-Lock the song.notes[] to prevent data race/maybe not even a problem, since the music thread wont need to access song.notes[]
+-Lock file modification while music is playing.
+-Clicking generate stops music and any other threads
 -Implement the fitness allocation
 -Implement the genetic crossover and mutation
 -Separate file into appropriate modules
@@ -33,20 +36,19 @@ class MenuInterface:
 	'''
 	Contains the GUI implementation, only play function currently works
 	'''
-	play_buttons = list()
+	
 
 	def __init__(self, master, count, length):
 		#generate population and songs
 		self.pop = Population(count, length)
+		self.play_buttons = []
 		self.setup_rating()
 		master.mainloop()
+		
 	
 	def setup_rating(self):
-		b0 = Button(master, text = "Play", command=lambda: self.play(0)).grid(row=1, column=0)
-		b1 = Button(master, text = "Play", command=lambda: self.play(1)).grid(row=2, column=0)
-		b2 = Button(master, text = "Play", command=lambda: self.play(2)).grid(row=3, column=0)
-		b3 = Button(master, text = "Play", command=lambda: self.play(3)).grid(row=4, column=0)
-		b4 = Button(master, text = "Play", command=lambda: self.play(4)).grid(row=5, column=0)
+		
+		num = 0
 		
 		MODES = [
 			("Horrible", 0),
@@ -55,12 +57,17 @@ class MenuInterface:
 			("Good", 3),
 			("Amazing", 4)
 		]
-		i = 0
+		
 		for mode, num in MODES:
-			w = Label(master, text=mode).grid(row=0, column=i + 1)
-			i = (i + 1) % 5
+			
+			print type(num)
+			i = int(num)
+			print i
+			self.play_buttons.append(Button(master, text = "Play", command=lambda num=num: self.play(num)).grid(row=num + 1, column=0))
+			w = Label(master, text=mode).grid(row=0, column=num + 1)
 		
 		i = 0;
+
 		radio_vars = []
 		for j in range(1,6):
 			v = StringVar()
@@ -92,7 +99,8 @@ class Population:
 			self.songs.append(song)
 			
 	def play_song(self, num):
-		self.songs[num].play()
+		song_thread = threading.Thread(target=lambda: self.songs[num].play(song_thread))
+		song_thread.start()
 	
 class Song:
 	'''
@@ -195,7 +203,7 @@ class Song:
 	need to create separate thread/tidy up function
 	Most of code from http://www.daniweb.com/software-development/python/code/216976/play-a-midi-music-file-using-pygame
 	'''
-	def play(self):
+	def play(self, song_thread):
 		music_file = "output" + str(self.id) + ".mid"
 		clock = time.Clock()
 		
@@ -227,7 +235,7 @@ class Song:
 			mixer.music.fadeout(1000)
 			mixer.music.stop()
 			raise SystemExit
-		
+		song_thread.join()
 		
 		
 										
