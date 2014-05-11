@@ -1,1 +1,6 @@
 Hello!
+This program implements a basic genetic algorithm in order to create "likable"
+music. 
+
+The music back end will eventually be separated from the GUI into it's own 
+module and will be avaliable to be used in similar projects.
