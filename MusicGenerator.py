@@ -23,7 +23,7 @@ To-Do List:
 -Create separate thread for playing music/Join() is currently buggy
 -Lock the song.notes[] to prevent data race/maybe not even a problem, since the music thread wont need to access song.notes[]
 -Lock file modification while music is playing.
--Clicking generate stops music and any other threads
+-Clicking generate stops music and any other threads except tkinter
 -Implement the fitness allocation
 -Implement the genetic crossover and mutation
 -Separate file into appropriate modules
@@ -37,18 +37,20 @@ class MenuInterface:
 	Contains the GUI implementation, only play function currently works
 	'''
 	
-
-	def __init__(self, master, count, length):
+	'''
+	Initilises the GUI variables, starts GUI loop
+	'''
+	def __init__(self, master, count, song_length):
 		#generate population and songs
-		self.pop = Population(count, length)
+		self.count = count
+		self.pop = Population(count, song_length, True)
+		self.mutator = Mutator(count, song_length)
 		self.play_buttons = []
 		self.setup_rating()
 		master.mainloop()
 		
 	
 	def setup_rating(self):
-		
-		num = 0
 		
 		MODES = [
 			("Horrible", 0),
@@ -57,50 +59,110 @@ class MenuInterface:
 			("Good", 3),
 			("Amazing", 4)
 		]
+		self.radio_vars = []
 		
 		for mode, num in MODES:
-			
-			print type(num)
-			i = int(num)
-			print i
-			self.play_buttons.append(Button(master, text = "Play", command=lambda num=num: self.play(num)).grid(row=num + 1, column=0))
 			w = Label(master, text=mode).grid(row=0, column=num + 1)
 		
-		i = 0;
-
-		radio_vars = []
-		for j in range(1,6):
-			v = StringVar()
-			v.set("L")
-			radio_vars.append(v)
-			for num in MODES:
-				r = Radiobutton(master, variable = v, value=num*j).grid(row = j, column = i + 1)
-				i = (i + 1)%5
+		for j in range(0, self.count):
+			v = IntVar()
+			self.radio_vars.append(v)
+			self.play_buttons.append(Button(master, text = "Play", command=lambda num=j: self.play(num)).grid(row = j + 1, column = 0))
+			for mode, num in MODES:
+				r = Radiobutton(master, variable = v, value=num).grid(row = j + 1, column = num + 1)
+				
+		generate_button = Button(master, text = "Generate", command=lambda: self.submit()).grid(row=self.count + 1, column=2, columnspan=3, sticky=S, padx=5, pady=5)
 		
-		generate_button = Button(master, text = "Generate", command=lambda: self.submit(radio_vars)).grid(row=6, column=2, columnspan=3, sticky=S, padx=5, pady=5)
 		
 		
 	def play(self, i):
 		self.pop.play_song(i)
 		
-	def submit(self, radio_vars):
-		for value in radio_vars:
-			print value
+	def submit(self):
+		for i in range(0,self.count):
+			fitness = self.radio_vars[i].get() 
+			self.pop.set_fitness(i, fitness)
+		self.pop = self.mutator.evolve_population(self.pop)
+	
+	
+class Mutator:
+	
+	TOURNAMENT_SIZE = 3
+	MUTATION_FACTOR = 10
+	
+	def __init__(self, count, song_length):
 		print "Hello"
+		self.count = count
+		self.song_length = song_length
+		self.elitism = True
 		
 	
+	def evolve_population(self, population):
+		new_population = Population(self.count, self.song_length, False)
+		elitism_offset = 0
 		
+		if self.elitism:
+			elitism_offset = 1
+			new_population.add_song(population.get_fittest())
+		
+		for i in range (0, self.count):
+			indiv1 = self.tournament_selection(population)
+			indiv2 = self.tournament_selection(population)
+			new_indiv = self.cross_over(indiv1, indiv2)
+			new_population.add_song(new_indiv)
+		
+		return new_population
+		
+	def tournament_selection(self, population):
+		self.tournament_pop = Population(self.TOURNAMENT_SIZE, self.song_length, False)
+		for i in range(0, self.TOURNAMENT_SIZE):
+			self.tournament_pop.songs.append(population.get_song(randint(0, self.count - 1))) 
+			
+		fittest = self.tournament_pop.get_fittest()	
+		return fittest
+		
+	def cross_over(self, indiv1, indiv2):
+		print "Incomplete"
+		return indiv1
+	
+	
+	
 class Population:
 	
-	def __init__(self, count, length):
-		self.songs = []
-		for i in range(0, count):
-			song = Song(length, i)
-			self.songs.append(song)
-			
+	def __init__(self, count, song_length, initialise):
+		if initialise:
+			self.songs = []
+			self.count = count
+			self.song_length = song_length
+			for i in range(0, count):
+				song = Song(song_length, i)
+				self.songs.append(song)
+		else:
+			self.songs = []
+			self.count = count
+			self.song_length = song_length
+		
+	def add_song(self, song):
+		self.songs.append(song)
+		
+	def get_song(self, index):
+		if index <= self.count:
+			return self.songs[index]
+		
 	def play_song(self, num):
 		song_thread = threading.Thread(target=lambda: self.songs[num].play(song_thread))
 		song_thread.start()
+		
+	def set_fitness(self, num, fitness):
+		self.songs[num].fitness = fitness
+		
+	def get_fittest(self):
+		max = -1
+		for i in range(0, len(self.songs)):
+			if (self.songs[i].fitness > max):
+				max = self.songs[i].fitness
+				fittest = self.songs[i]
+		return fittest
 	
 class Song:
 	'''
@@ -143,7 +205,7 @@ class Song:
 		for i in range(0, 12):
 			total = 0
 			for j in range(0,12):
-				num = randint(0,100)
+				num = randint(1,100) #start from 1, to ensure that a list of all 0 never occurs
 				total += num
 				#Implemented so probability can be calculate via int. Has an additive effect. 
 				self.prob[i].insert(j, total)
@@ -206,7 +268,6 @@ class Song:
 	def play(self, song_thread):
 		music_file = "output" + str(self.id) + ".mid"
 		clock = time.Clock()
-		
 		
 		freq = 44100 # audio CD quality
 		bitsize = -16 # unsigned 16 bit
