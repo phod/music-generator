@@ -10,7 +10,7 @@
 
 
 from midiutil.MidiFile import MIDIFile
-from random import randint
+from random import randint, uniform
 from Tkinter import *
 from bisect import bisect_left
 from pygame import mixer, time
@@ -45,6 +45,7 @@ class MenuInterface:
 		self.count = count
 		self.pop = Population(count, song_length, True)
 		self.mutator = Mutator(count, song_length)
+		self.song_length = song_length
 		self.play_buttons = []
 		self.setup_rating()
 		master.mainloop()
@@ -83,12 +84,13 @@ class MenuInterface:
 			fitness = self.radio_vars[i].get() 
 			self.pop.set_fitness(i, fitness)
 		self.pop = self.mutator.evolve_population(self.pop)
-	
+		for i in range(0, self.count):
+			self.pop.songs[i].generate_notes(self.song_length)
 	
 class Mutator:
 	
 	TOURNAMENT_SIZE = 3
-	MUTATION_FACTOR = 10
+	MUTATION_FACTOR = 0.30 #must be less than or equal to 1
 	
 	def __init__(self, count, song_length):
 		print "Hello"
@@ -122,9 +124,44 @@ class Mutator:
 		return fittest
 		
 	def cross_over(self, indiv1, indiv2):
-		print "Incomplete"
-		return indiv1
+		print "derp"
+		new_indiv = Song(self.count, self.song_length, False)
+		new_probs = []
+		for prev_note in range(12):
+			new_probs.append([])
+			for index in range(12):
+				value = (indiv1.get_prob(prev_note, index) + indiv2.get_prob(prev_note, index))/2
+				new_probs[prev_note].append(value)
+				
+		for prev_note in range(12):
+			for index in range(12):
+				mut_range = 0
+				if index == 0:
+					diff1 = new_probs[prev_note][index]
+					diff2 = new_probs[prev_note][index + 1] - new_probs[prev_note][index]
+					mut_range = min(diff1, diff2)
+				elif index == 11:
+					diff = new_probs[prev_note][index] - new_probs[prev_note][index - 1]
+					mut_range = diff
+				else:
+					diff1 = new_probs[prev_note][index] - new_probs[prev_note][index - 1]
+					diff2 = new_probs[prev_note][index + 1] - new_probs[prev_note][index]
+					mut_range = min(diff1, diff2)
+					
+				value = self.mutate_gene(value, mut_range)
+				new_probs[prev_note].insert(index, value)	
+		
+		for prev_note in range(12):
+			for index in range(12):
+				new_indiv.insert_prob(prev_note, index, new_probs[prev_note][index])
+		
+		return new_indiv
 	
+	def mutate_gene(self, value, range):
+		sign = randint(0, 1)
+		if sign == 0: #sign will be either positive or negative 1.
+			sign = -1
+		return int(value + round(sign * self.MUTATION_FACTOR * range))
 	
 	
 class Population:
@@ -135,7 +172,7 @@ class Population:
 			self.count = count
 			self.song_length = song_length
 			for i in range(0, count):
-				song = Song(song_length, i)
+				song = Song(song_length, i, True)
 				self.songs.append(song)
 		else:
 			self.songs = []
@@ -186,20 +223,37 @@ class Song:
 	UPPER_OCTAVE = 6
 	OCTAVE_THRESHOLD = 50
 		
-	def __init__(self, length, id):
+	def __init__(self, length, id, generate_prob):
+		
 		self.my_MIDI = MIDIFile(1)
 		self.prob = [[] for i in range(12)]
-		self.totals = []
+		self.totals = [0 for i in range(12)]
 		self.notes = []
 		self.prev_note = -1
 		self.fitness = 0
 		self.id = id
 		self.length = length
 		
-		self.generate_prob()
+		if generate_prob == True:
+			self.generate_prob()
+		
 		self.generate_notes(length)
 		self.create(self.notes)
 	
+	'''
+	Values must be added in order for total/probabilities to be calculated properley.
+	'''
+	def append_prob(self, prev_note, value):
+		self.prob[prev_note].append(value + self.totals[prev_note])
+		self.totals[prev_note] = self.totals[prev_note] + value 
+	
+	def insert_prob(self, prev_note, index, value):
+		self.prob[prev_note].insert(value, index)
+		if index == 11:
+			self.totals[prev_note] = value
+	
+	def get_prob(self, prev_note, index):
+		return self.prob[prev_note][index]
 	
 	def generate_prob(self):
 		for i in range(0, 12):
@@ -222,8 +276,11 @@ class Song:
 				self.notes.append(curr_note + octave * 12)
 				self.prev_note = curr_note
 			else:
+				print "prev note is" + str(self.prev_note)
 				num = randint(0, self.totals[self.prev_note])
+				print "probs are " + str(self.prob[self.prev_note])
 				pos = bisect_left(self.prob[self.prev_note], num, lo=0, hi=len(self.prob[self.prev_note]))
+				print "pos is " + str(pos) + " num is " + str(num)
 				self.notes.append(pos + octave * 12)
 				self.prev_note = pos
 						
