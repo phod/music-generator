@@ -25,7 +25,7 @@ To-Do List:
 -Lock file modification while music is playing.
 -Clicking generate stops music and any other threads except tkinter
 -Implement the fitness allocation
--Implement the genetic crossover and mutation
+-Debug the genetic crossover and mutation
 -Separate file into appropriate modules
 -Implement rhythm into Songs
 -Implement octave/rhythm mutation
@@ -86,7 +86,14 @@ class MenuInterface:
 		self.pop = self.mutator.evolve_population(self.pop)
 		for i in range(0, self.count):
 			self.pop.songs[i].generate_notes(self.song_length)
-	
+
+#end class
+			
+'''
+Creates a new Population of Songs based on the input Population of Songs.
+Only need to call constructor and evolve_population, all other functons
+are helper functions.
+'''			
 class Mutator:
 	
 	TOURNAMENT_SIZE = 3
@@ -98,7 +105,9 @@ class Mutator:
 		self.song_length = song_length
 		self.elitism = True
 		
-	
+	#
+	# Returns a new population which is genetic similar to the input population
+	#
 	def evolve_population(self, population):
 		new_population = Population(self.count, self.song_length, False)
 		elitism_offset = 0
@@ -114,7 +123,10 @@ class Mutator:
 			new_population.add_song(new_indiv)
 		
 		return new_population
-		
+	
+	#
+	# Returns the fittest Song from a randomly selected population
+	#
 	def tournament_selection(self, population):
 		self.tournament_pop = Population(self.TOURNAMENT_SIZE, self.song_length, False)
 		for i in range(0, self.TOURNAMENT_SIZE):
@@ -122,7 +134,11 @@ class Mutator:
 			
 		fittest = self.tournament_pop.get_fittest()	
 		return fittest
-		
+	
+	#
+	# Returns a new Song, with the probabilities of notes similar 
+	#(but not identical to) to the two input Songs.
+	#
 	def cross_over(self, indiv1, indiv2):
 		print "derp"
 		new_indiv = Song(self.count, self.song_length, False)
@@ -157,12 +173,18 @@ class Mutator:
 		
 		return new_indiv
 	
+	#
+	# Returns a modified value which is added/subtracted within a given range.
+	#
+	# ToDo: Modify MUTATION_FACTOR to work as an upper bound on range
+	# 		Not just as a flat value.
 	def mutate_gene(self, value, range):
 		sign = randint(0, 1)
 		if sign == 0: #sign will be either positive or negative 1.
 			sign = -1
 		return int(value + round(sign * self.MUTATION_FACTOR * range))
 	
+#end class
 	
 class Population:
 	
@@ -201,6 +223,8 @@ class Population:
 				fittest = self.songs[i]
 		return fittest
 	
+#end class	
+
 class Song:
 	'''
 	Contains individual song information, note constants have been made just 
@@ -355,8 +379,8 @@ class Song:
 			raise SystemExit
 		song_thread.join()
 		
-		
-										
+#end class
+
 count = 5
 length = 20
 master = Tk()
