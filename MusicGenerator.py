@@ -21,7 +21,8 @@ import threading
 To-Do List:
 -Tidy up MenuInterface
 -Create separate thread for playing music/Join() is currently buggy
--Lock the song.notes[] to prevent data race/maybe not even a problem, since the music thread wont need to access song.notes[]
+-Lock the song.notes[] to prevent data race/maybe not even a problem,
+since the music thread wont need to access song.notes[]
 -Lock file modification while music is playing.
 -Clicking generate stops music and any other threads except tkinter
 -Implement the fitness allocation
@@ -68,11 +69,13 @@ class MenuInterface:
 		for j in range(0, self.count):
 			v = IntVar()
 			self.radio_vars.append(v)
-			self.play_buttons.append(Button(master, text = "Play", command=lambda num=j: self.play(num)).grid(row = j + 1, column = 0))
+			self.play_buttons.append(Button(master, text = "Play", command=lambda num=j:
+                                                        self.play(num)).grid(row = j + 1, column = 0))
 			for mode, num in MODES:
 				r = Radiobutton(master, variable = v, value=num).grid(row = j + 1, column = num + 1)
 				
-		generate_button = Button(master, text = "Generate", command=lambda: self.submit()).grid(row=self.count + 1, column=2, columnspan=3, sticky=S, padx=5, pady=5)
+		generate_button = Button(master, text = "Generate", command=lambda:
+                                         self.submit()).grid(row=self.count + 1, column=2, columnspan=3, sticky=S, padx=5, pady=5)
 		
 		
 		
@@ -185,9 +188,19 @@ class Mutator:
 		return int(value + round(sign * self.MUTATION_FACTOR * range))
 	
 #end class
-	
+
+'''
+Wrapper class for a a list of Songs.
+Various accessors and mutators avaliable to use.
+A population can either be used to create songs
+'''
 class Population:
-	
+
+        #
+        # Initialises the Songs list and other related variables.
+        # Todo: Move song initialisation to it's own method and
+        # call this method from outside the class.
+        #
 	def __init__(self, count, song_length, initialise):
 		if initialise:
 			self.songs = []
@@ -200,21 +213,43 @@ class Population:
 			self.songs = []
 			self.count = count
 			self.song_length = song_length
-		
+	#
+	# Adds a Song to the end of the population.
+        # TODO: Increment self.count suitably.
+        #
 	def add_song(self, song):
 		self.songs.append(song)
-		
+
+        
+        #
+        # Returns a reference to the specified Song
+        # TODO: Implement check that the song exists
+        #
 	def get_song(self, index):
 		if index <= self.count:
 			return self.songs[index]
-		
+
+        #
+        # Creates a new song_thread which will play the notes from a specified
+        # Song
+        # TODO: Adjust thread creation so that it is possible to stop a song
+        # early and to properley merge the thread with the main process thread
+        #
 	def play_song(self, num):
 		song_thread = threading.Thread(target=lambda: self.songs[num].play(song_thread))
 		song_thread.start()
-		
+
+        #
+        # Sets the fitness of Song number: num
+        # TODO: implement check to make sure num is within suitable bounds
+        #
 	def set_fitness(self, num, fitness):
 		self.songs[num].fitness = fitness
-		
+
+        #
+        # Returns the Song with the highest fitness rating.
+        # Currently assumed that Songs have been initilised and given fitness
+        #
 	def get_fittest(self):
 		max = -1
 		for i in range(0, len(self.songs)):
@@ -344,7 +379,8 @@ class Song:
 		
 	'''
 	need to create separate thread/tidy up function
-	Most of code from http://www.daniweb.com/software-development/python/code/216976/play-a-midi-music-file-using-pygame
+	Most of code from
+        http://www.daniweb.com/software-development/python/code/216976/play-a-midi-music-file-using-pygame
 	'''
 	def play(self, song_thread):
 		music_file = "output" + str(self.id) + ".mid"
