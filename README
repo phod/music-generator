@@ -1,6 +1,18 @@
-Hello!
+music-generator
+author: phod
+
+--------
+About:
+THIS PROGRAM IS STILL IN DEVELOPMENT
 This program implements a basic genetic algorithm in order to create "likable"
 music. 
 
-The music back end will eventually be separated from the GUI into it's own 
-module and will be avaliable to be used in similar projects.
+This project is a test of concept. The lessons learned from this, and a few future projects will influence the development of a Python library for similar projects.
+
+Currently, this project only runs on Python 2.7. The supporting libraries will be updated to Python 3 for the library.
+
+--------
+How to use:
+TODO
+
+--------
