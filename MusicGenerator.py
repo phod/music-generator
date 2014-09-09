@@ -349,14 +349,14 @@ class Song:
     def generate_octave(self, prev_octave):
         if prev_octave == 0:
             return randint(Song.LOWER_OCTAVE, Song.UPPER_OCTAVE)
-            if randint(0,100) < Song.OCTAVE_THRESHOLD:
-                return prev_octave
-                if prev_octave <= Song.LOWER_OCTAVE:
-                    return prev_octave + randint(0,1)
-                elif prev_octave >= Song.UPPER_OCTAVE:
-                    return prev_octave - randint(0,1)
-                else:
-                    return prev_octave + (randint(0,2) - 1)
+        if randint(0,100) < Song.OCTAVE_THRESHOLD:
+            return prev_octave
+        if prev_octave <= Song.LOWER_OCTAVE:
+            return prev_octave + randint(0,1)
+        elif prev_octave >= Song.UPPER_OCTAVE:
+            return prev_octave - randint(0,1)
+        else:
+            return prev_octave + (randint(0,2) - 1)
                     
     def create(self, notes):
         track = 0   
@@ -406,19 +406,21 @@ class Song:
                 while mixer.music.get_busy():
                     # check if playback has finished
                     clock.tick(30)
-                except KeyboardInterrupt:
+                    #except KeyboardInterrupt:
                     # if user hits Ctrl/C then exit
                     # (works only in console mode)
                     # modify to work on GUI
-                    mixer.music.fadeout(1000)
-                    mixer.music.stop()
-                    raise SystemExit
-                    song_thread.join()
-                    
+                    #mixer.music.fadeout(1000)
+                    #  mixer.music.stop()
+                    # raise SystemExit
+                    #song_thread.join()
+                    print "hello"
+        except error:
+            print 'lol'
 #end class
+
 
 count = 5
 length = 20
 master = Tk()
 menu_interface = MenuInterface(master, count, length)
-ÿ
