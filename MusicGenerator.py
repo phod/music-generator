@@ -209,11 +209,11 @@ class Population:
             for i in range(0, count):
                 song = Song(song_length, i, True)
                 self.songs.append(song)
-            else:
-                self.songs = []
-                self.count = count
-                self.song_length = song_length
-                #
+        else:
+            self.songs = []
+            self.count = count
+            self.song_length = song_length
+    #
     # Adds a Song to the end of the population.
     # TODO: Increment self.count suitably.
     #
@@ -369,6 +369,7 @@ class Song:
         self.my_MIDI.addTempo(track,time,120)
 
         # Now add the note.
+        print "**************", self.length
         for x in range(0,self.length):
             self.my_MIDI.addNote(track,channel,self.notes[x],x,duration,volume)
             # And write it to disk.
@@ -402,21 +403,20 @@ class Song:
             except error:
                 print "File %s not found! (%s)" % (music_file, get_error())
                 return
-                mixer.music.play()
-                while mixer.music.get_busy():
+            mixer.music.play()
+            while mixer.music.get_busy():
                     # check if playback has finished
-                    clock.tick(30)
-                    #except KeyboardInterrupt:
-                    # if user hits Ctrl/C then exit
-                    # (works only in console mode)
-                    # modify to work on GUI
-                    #mixer.music.fadeout(1000)
-                    #  mixer.music.stop()
-                    # raise SystemExit
-                    #song_thread.join()
-                    print "hello"
-        except error:
-            print 'lol'
+                clock.tick(30)
+                print 'here'
+        except KeyboardInterrupt:
+            #if user hits Ctrl/C then exit
+            #(works only in console mode)
+            #modify to work on GUI
+            mixer.music.fadeout(1000)
+            mixer.music.stop()
+            raise SystemExit
+            song_thread.join()
+                
 #end class
 
 
