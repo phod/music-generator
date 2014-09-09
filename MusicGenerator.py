@@ -151,7 +151,7 @@ class Mutator:
             for index in range(12):
                 value = (indiv1.get_prob(prev_note, index) + indiv2.get_prob(prev_note, index))/2
                 new_probs[prev_note].append(value)
-                
+        
         for prev_note in range(12):
             for index in range(12):
                 mut_range = 0
@@ -185,7 +185,7 @@ class Mutator:
         sign = randint(0, 1)
         if sign == 0: #sign will be either positive or negative 1.
             sign = -1
-            return int(value + round(sign * self.MUTATION_FACTOR * range))
+        return int(value + round(sign * self.MUTATION_FACTOR * range))
             
 #end class
 
@@ -369,13 +369,12 @@ class Song:
         self.my_MIDI.addTempo(track,time,120)
 
         # Now add the note.
-        print "**************", self.length
         for x in range(0,self.length):
             self.my_MIDI.addNote(track,channel,self.notes[x],x,duration,volume)
             # And write it to disk.
-            binfile = open("output" + str(self.id) + ".mid", 'wb')
-            self.my_MIDI.writeFile(binfile)
-            binfile.close()
+        binfile = open("output" + str(self.id) + ".mid", 'wb')
+        self.my_MIDI.writeFile(binfile)
+        binfile.close()
             
         
     '''
@@ -414,6 +413,7 @@ class Song:
             #modify to work on GUI
             mixer.music.fadeout(1000)
             mixer.music.stop()
+            print 'lolno'
             raise SystemExit
             song_thread.join()
                 
