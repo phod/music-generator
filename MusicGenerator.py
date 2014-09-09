@@ -119,7 +119,7 @@ class Mutator:
             elitism_offset = 1
             new_population.add_song(population.get_fittest())
             
-        for i in range (0, self.count):
+        for i in range (elitism_offset, self.count):
             indiv1 = self.tournament_selection(population)
             indiv2 = self.tournament_selection(population)
             new_indiv = self.cross_over(indiv1, indiv2)
@@ -140,7 +140,7 @@ class Mutator:
         
     #
     # Returns a new Song, with the probabilities of notes similar 
-    #(but not identical to) to the two input Songs.
+    # (but not identical to) to the two input Songs.
     #
     def cross_over(self, indiv1, indiv2):
         print "derp"
