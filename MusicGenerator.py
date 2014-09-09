@@ -371,7 +371,7 @@ class Song:
         # Now add the note.
         for x in range(0,self.length):
             self.my_MIDI.addNote(track,channel,self.notes[x],x,duration,volume)
-            # And write it to disk.
+        # And write it to disk.
         binfile = open("output" + str(self.id) + ".mid", 'wb')
         self.my_MIDI.writeFile(binfile)
         binfile.close()
@@ -406,7 +406,6 @@ class Song:
             while mixer.music.get_busy():
                     # check if playback has finished
                 clock.tick(30)
-                print 'here'
         except KeyboardInterrupt:
             #if user hits Ctrl/C then exit
             #(works only in console mode)
